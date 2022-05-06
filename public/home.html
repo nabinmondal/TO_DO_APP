@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="./index.css">
+    <title>Document</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+          <a class="navbar-brand" href="#">Todo list</a>
+          <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+          <div class="collapse navbar-collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+              <li class="nav-item">
+                <a class="nav-link active" aria-current="page" href="/">Home</a>
+              </li>
+            </ul>
+            <h1 class = 'username'></h1>
+          </div>
+        </div>
+      </nav>
+      <form class="row g-3 todo_form">    
+        <div class="col-auto">
+          <label for="inputPassword2" class="visually-hidden"></label>
+          <input type="text" class="form-control" id="todo" placeholder="Add a to do ">
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary mb-3">ADD</button>
+        </div>
+      </form>
+      <div>
+        <table class="table table-primary my_tasks">
+          <tr class="table-primary">
+            <td>tasks</td>
+            <td>delete</td>
+            <td>update</td>
+          </tr>
+        </table>
+      </div>
+      <script>
+        let arr;
+        let global_status = 0;
+        let global_id = 0;
+        const task_form = document.querySelector(".todo_form");
+        const task = document.getElementById('todo');
+        const list_holder = document.querySelector('.my_tasks');
+        
+        const deleteTask = async function(){
+          const ele = this.parentElement;
+          const result = await fetch('/tasks',{
+            method : "DELETE",
+            headers : {
+              'Content-type' : 'application/json'
+            },
+            body : JSON.stringify({
+              token : localStorage.getItem('token'),
+              _id : ele.id
+            })
+          }).then((res)=>{
+            res.json();
+          })
+          console.log(result);
+          ele.remove();
+        }
+        
+        const updateTask = async function(){
+          //Updating the task in the backend ......
+          const result = await fetch('/tasks',{
+            method : "PATCH",
+            headers : {
+              'Content-type' : 'application/json'
+            },
+            body : JSON.stringify({
+                  token : localStorage.getItem('token'),
+                  _id : global_id,
+                  task : task.value
+            })
+          }).then((res)=>res.json());
+          if(result.status=='ok'){
+            alert("task modified successfully");
+          }
+          else{
+            alert("error");
+          }
+          // Updating the task in the fronted .....
+          const element = document.getElementById(global_id);
+          element.childNodes[0].innerText = task.value;
+          task.value = "";
+          // restoring the global values.....
+          global_id=0;
+          global_status=0;
+        }
+        const updateclicked = async function(){
+          const ele = this.parentElement;
+          todo.value = this.previousSibling.previousSibling.innerText;
+          global_status=1;
+          global_id = ele.id;
+        }
+        
+        const createElement =  function(data,id){
+          const parentdiv = document.createElement('tr');
+          parentdiv.id = id;
+          parentdiv.classList.add('table-primary');
+          const childDiv = document.createElement('td');
+          childDiv.innerText = data;
+          childDiv.classList.add('abcd')
+          const deleteButton = document.createElement('td');
+          deleteButton.innerText = "delete";
+          deleteButton.classList.add('btn' ,'btn-danger','xyxy');
+          deleteButton.addEventListener('click',deleteTask);
+          const updateButton = document.createElement('td');
+          updateButton.innerText="update";
+          updateButton.classList.add('btn','btn-success',)
+          updateButton.addEventListener('click',updateclicked);
+          parentdiv.append(childDiv);
+          parentdiv.append(deleteButton);
+          parentdiv.append(updateButton);
+          return parentdiv;
+        }
+        
+        const loadPage = async function(event){
+          //username greeting....
+            arr = localStorage.getItem('token').split('.');
+            const username = JSON.parse(atob(arr[1])).username;
+            const username_holder = document.querySelector('.username');
+            username_holder.innerHTML = username;
+            //fetching previous todos...
+            const result = await fetch(`/tasks/${localStorage.getItem('token')}`)
+                .then((res)=>res.json());
+                if(result.data.length!=0){
+                   result.data.forEach(listItem => {
+                      const ele = createElement(listItem.task,listItem._id);
+                      list_holder.append(ele);
+                 })
+              }
+            }
+         
+            const addTask = async function(event){
+                //adding task to the backend
+                const result = await  fetch(`/tasks`,{
+                  method : "POST",
+                  headers : {
+                    'Content-type' : 'application/json'
+                  },
+                  body : JSON.stringify({
+                    token : localStorage.getItem('token'),
+                    task : task.value
+                  })
+                }).then((res)=>res.json());
+                if(result.status == 'ok'){
+                  task.value="";
+                  alert('task created successfully');
+                }
+                else{
+                  alert("ERROR");
+                }
+                //adding task to the front end
+                const ele = createElement(result.data.task,result.data._id);
+                list_holder.append(ele);
+          }
+         
+          const driver = function(event){
+            event.preventDefault();
+            console.log(global_status);  
+            if(global_status==0){
+                addTask(event);
+              }
+              else{
+                updateTask(event);
+              }
+            }
+        window.addEventListener('load',loadPage);
+        task_form.addEventListener('submit',driver);
+      </script>
+</body>
+</html>
