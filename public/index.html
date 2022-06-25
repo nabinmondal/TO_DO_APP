@@ -58,10 +58,17 @@
                   })
               }).then((res)=>res.json());
               console.log(result);
-              const token = result.data;
-              localStorage.setItem("token",token);
-              console.log(token);
-              window.location.replace('/home.html');
+              if(result.status=='error'){
+                alert("Invalid Username/Password");
+                document.getElementById('username').value="";
+                document.getElementById('password').value="";
+              }
+              else{
+                const token = result.data;
+                localStorage.setItem("token",token);
+                console.log(token);
+                window.location.replace('/home.html');
+              }
           }
           form.addEventListener('submit',LoginUser);
           button.addEventListener('click',(event)=>{

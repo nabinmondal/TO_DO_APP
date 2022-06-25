@@ -22,6 +22,7 @@
               </li>
             </ul>
             <h1 class = 'username'></h1>
+            <button type="button" class="btn btn-secondary" id="sign_out">sign out</button>   
           </div>
         </div>
       </nav>
@@ -50,6 +51,11 @@
         const task_form = document.querySelector(".todo_form");
         const task = document.getElementById('todo');
         const list_holder = document.querySelector('.my_tasks');
+        const signout  = document.getElementById('sign_out');
+        signout.addEventListener('click',()=>{
+          localStorage.clear();
+          window.location.href = "/index.html";
+        })
         
         const deleteTask = async function(){
           const ele = this.parentElement;
